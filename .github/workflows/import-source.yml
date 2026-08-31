@@ -22,6 +22,10 @@ jobs:
     
     steps:
     
+      - name: Baixar o repositório
+      
+        uses: actions/checkout@v4
+        
       - name: Baixar e extrair a source
       
         run: |
@@ -61,6 +65,8 @@ jobs:
           git commit -m "Publicar source extraída" || exit 0
           
           git push
+
+
 
 
 
