@@ -1,0 +1,20 @@
+No linha:1 caractere:145
++ ... g' | Select-Object -First 30 | ForEach-Object { '{0}: {1}' -f .LineNu ...
++                                                                  ~
+ê necess†rio fornecer uma express∆o de valor ap¢s o operador '-f'.
+No linha:1 caractere:146
++ ... Object -First 30 | ForEach-Object { '{0}: {1}' -f .LineNumber, .Line. ...
++                                                       ~~~~~~~~~~~
+Token '.LineNumber' inesperado na express∆o ou instruá∆o.
+No linha:1 caractere:157
++ ... bject -First 30 | ForEach-Object { '{0}: {1}' -f .LineNumber, .Line.T ...
++                                                                 ~
+Argumento ausente na lista de parÉmetros.
+No linha:1 caractere:170
++ ... First 30 | ForEach-Object { '{0}: {1}' -f .LineNumber, .Line.Trim() }
++                                                                       ~
+Uma express∆o era esperada ap¢s '('.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordEx 
+   ception
+    + FullyQualifiedErrorId : ExpectedValueExpression
+ 

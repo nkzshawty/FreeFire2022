@@ -1,0 +1,66 @@
+const path = require('path');
+const fs = require('fs');
+const express = require('express');
+const { createBaseApp, finalizeApp } = require('./base');
+
+module.exports = function createLiveApp() {
+  const app = createBaseApp();
+  const staticPath = path.join(__dirname, '..', '..', 'static', 'ABHotUpdates');
+
+  app.use('/live', require('../routes/version'));
+
+  // Middleware: resolve gameassetbundles requests by matching the base name
+  // (ignoring the hash suffix after the dot)
+  // Game requests: /live/ABHotUpdates/.../gameassetbundles/loc_pt-br.HASH_A
+  // Our file:      static/ABHotUpdates/.../gameassetbundles/loc_pt-br.HASH_B
+  app.get('/live/ABHotUpdates/**/gameassetbundles/:filename', (req, res) => {
+    const requestedFile = req.params.filename;
+    const baseName = requestedFile.split('.')[0]; // e.g. "loc_pt-br"
+    
+    // Build the directory path from the wildcard params
+    const wildcardPath = req.params[0]; // e.g. "android/optional/optionallocres/99"
+    const dirPath = path.join(staticPath, wildcardPath, 'gameassetbundles');
+    
+    if (!fs.existsSync(dirPath)) {
+      console.log(`[live] gameassetbundles dir not found: ${dirPath}`);
+      return res.status(404).end();
+    }
+    
+    // Find a file that starts with baseName + "."
+    const files = fs.readdirSync(dirPath);
+    const match = files.find(f => f.startsWith(baseName + '.'));
+    
+    if (match) {
+      const filePath = path.join(dirPath, match);
+      console.log(`[live] serving ${baseName} -> ${match} (${fs.statSync(filePath).size} bytes)`);
+      res.type('application/octet-stream').sendFile(filePath);
+    } else {
+      console.log(`[live] no match for ${baseName} in ${dirPath}`);
+      res.status(404).end();
+    }
+  });
+
+  // Serve all other ABHotUpdates static files directly (fileinfo, versioninfo, etc.)
+  app.use('/live/ABHotUpdates', express.static(staticPath, {
+    dotfiles: 'allow',
+    index: false
+  }));
+  // Backward-compatible alias for clients that cached the earlier splash URL.
+  app.use('/live/banner-assets', express.static(path.join(staticPath, 'banner-assets'), {
+    dotfiles: 'allow',
+    index: false
+  }));
+
+  // Fallback: log and 404
+  app.get('/live/ABHotUpdates/*', (req, res) => {
+    console.log(`[live] 404 for ${req.path}`);
+    res.status(404).end();
+  });
+
+  // Garena Connect — /app/info/get
+  app.get('/app/info/get', (req, res) => {
+    res.json({ status: 0, client_log: false });
+  });
+
+  return finalizeApp(app, 'live');
+};

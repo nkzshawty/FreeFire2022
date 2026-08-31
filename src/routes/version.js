@@ -1,0 +1,53 @@
+const express = require('express');
+const router = express.Router();
+const service = require('../services/exampleService');
+const config = require('../../config/default');
+// ver.php redirects the client to the LOGIN server (port 3001) next, so
+// server_url below points there, not at this live server (3000).
+const loginPort = config.ports.login;
+// When LOGIN_DOMAIN is set (edge / Traefik), point the client at that domain over
+// TLS; otherwise fall back to the derived LAN IP + login port (dev / no edge).
+// A bare domain gets https://; include a scheme in the env to override it.
+const loginDomain = (config.domains && config.domains.login) || '';
+const version = process.env.GAME_VERSION || config.version || '1.70.0';
+const { getLocalIp } = require('../utils/address');
+
+function loginServerUrl(localIp, req) {
+    if (process.env.LOGIN_SERVER_URL) {
+        return process.env.LOGIN_SERVER_URL;
+    }
+    if (loginDomain && loginDomain !== 'login.example.com') {
+        return loginDomain.startsWith('http') ? loginDomain : `https://${loginDomain}/login/`;
+    }
+    const host = (req && req.headers && req.headers.host) ? req.headers.host.split(':')[0] : (localIp || '192.168.1.4');
+    return `http://${host}:${loginPort}/`;
+}
+
+router.get('/ver.php', async (req, res) => {
+    const requestIp = req.headers['x-forwarded-for'] || req.ip;
+    const localIp = await getLocalIp().catch(() => '192.168.1.4');
+    const host = req.headers.host ? req.headers.host : `${localIp}:${config.ports.live || 19134}`;
+    const cdnUrl = process.env.CDN_URL || `http://${host}/live/ABHotUpdates/`;
+
+    const data = {
+        "appstore_url": "https://play.google.com/store/apps/details?id=com.dts.freefireth",
+        "billboard_msg": "",
+        "cdn_url": cdnUrl,
+        "client_ip": requestIp,
+        "code": 0,
+        "country_code": "BR",
+        "force_to_restart_app": false,
+        "gdpr_version": 2,
+        "is_firewall_open": false,
+        "is_review_server": false,
+        "is_server_open": true,
+        "maintenance_announcement": "",
+        "maintenance_region": "",
+        "remote_option_version": process.env.REMOTE_OPTION_VERSION ?? "optionaltrainingres:2",
+        "remote_version": version,
+        "server_url": loginServerUrl(localIp, req)
+    };
+    res.json(data);
+});
+
+module.exports = router;

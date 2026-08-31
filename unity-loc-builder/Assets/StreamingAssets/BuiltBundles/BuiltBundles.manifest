@@ -1,0 +1,7 @@
+ManifestFileVersion: 0
+CRC: 2178057383
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: loc_pt-br
+      Dependencies: {}
