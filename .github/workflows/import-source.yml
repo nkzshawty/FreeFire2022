@@ -1,0 +1,44 @@
+name: Publicar source2022.zip
+
+
+
+on:
+
+  workflow_dispatch:
+  
+
+
+permissions:
+
+  contents: write
+  
+
+
+jobs:
+
+  publicar:
+  
+    runs-on: ubuntu-latest
+    
+    steps:
+    
+      - name: Baixar o ZIP
+      
+        run: curl -L --fail -o source2022.zip "https://files.manuscdn.com/user_upload_by_module/session_file/310519663930290721/VsUjxixEhbjypWhB.zip"
+        
+      - name: Publicar release com o ZIP
+      
+        env:
+        
+          GH_TOKEN: ${{ github.token }}
+          
+        run: gh release create v1.0.0 source2022.zip --repo "$GITHUB_REPOSITORY" --title "Source 2022" --notes "Arquivo source2022.zip"
+
+
+
+
+
+
+
+
+
