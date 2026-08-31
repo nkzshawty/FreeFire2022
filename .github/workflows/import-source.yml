@@ -1,4 +1,4 @@
-name: Extrair source2022.zip
+name: Extrair source2022.zip com segurança
 
 
 
@@ -50,21 +50,33 @@ jobs:
             
           fi
           
-      - name: Publicar arquivos extraídos
+      - name: Remover credenciais e publicar
       
         run: |
         
+          find . -type f \( -name '.env' -o -name '.env.*' -o -iname '*.pem' -o -iname '*.key' -o -iname '*credentials*' -o -iname '*secret*' \) -not -path './.git/*' -delete
+          
           rm -rf extracted source.zip .github/workflows/import-source.yml
+          
+          git lfs install
+          
+          find . -type f -size +95M -not -path './.git/*' -print0 | while IFS= read -r -d '' f; do git lfs track "$f"; done
           
           git config user.name "github-actions[bot]"
           
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
+          git add .gitattributes
+          
           git add -A
           
-          git commit -m "Publicar source extraída" || exit 0
+          git commit -m "Publicar source extraida sem credenciais" || exit 0
           
           git push
+
+
+
+
 
 
 
